@@ -1,0 +1,14 @@
+Metadata-Version: 2.1
+Name: Backtester
+Version: 0.1
+Requires-Dist: pandas==2.2.2
+Requires-Dist: pandas_ta==0.3.14b0
+Requires-Dist: numpy==1.26.4
+Requires-Dist: dash==2.17.0
+Requires-Dist: dash-bootstrap-components==1.6.0
+Requires-Dist: dash-bootstrap-templates==1.1.2
+Requires-Dist: dash-core-components==2.0.0
+Requires-Dist: dash-renderer==1.9.1
+Requires-Dist: dash-table==5.0.0
+Requires-Dist: optuna-dashboard==0.15.1
+Requires-Dist: optuna==3.6.0

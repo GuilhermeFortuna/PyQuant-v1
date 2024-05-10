@@ -192,7 +192,7 @@ class Data:
         go.Figure: The data figure.
         """
 
-        from apps.data_visualizer.config import market_data_layout, xaxis
+        from backtester.dashboards.data_visualizer.config import market_data_layout, xaxis
 
         # Load the data
         self._load_data()
@@ -288,7 +288,7 @@ class Data:
         list: A list of Scatter traces for the trades.
         """
 
-        from apps.data_visualizer.config import trade_marker_symbols, trade_marker_colors
+        from backtester.dashboards.data_visualizer.config import trade_marker_symbols, trade_marker_colors
 
         def create_trace(df: pd.DataFrame) -> go.Scatter:
             """
@@ -446,7 +446,7 @@ class Data:
         """
 
         # Import necessary modules and classes
-        from apps.data_visualizer.config import result_layout
+        from backtester.dashboards.data_visualizer.config import result_layout
         from backtester.trades import TradeRegistry
 
         # Create a figure with two subplots

@@ -14,16 +14,16 @@ import os
 warnings.filterwarnings('ignore')
 
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
-DATA_PATH = os.path.join(BASE_PATH, 'csv_data/ccm_60min.csv')
+DATA_PATH = os.path.join(BASE_PATH, 'csv_data/bgi_60min.csv')
 
 # Data parameters
 DATA_PARAMS = {
     'data_path': DATA_PATH,
-    'symbol': 'ccm',
+    'symbol': 'bgi',
     'timeframe': '60min',
     'date_from': datetime(2020, 1, 1),
     'date_to': datetime.today(),
-    'point_value': 450.0,
+    'point_value': 330.0,
     'cost_per_trade': 2.50,
 }
 
@@ -43,11 +43,11 @@ if __name__ == '__main__':
 
     # Create trading strategy using Moving Average Crossover
     strategy = MACrossover(
-        short_ma_func='sma',
+        short_ma_func='ema',
         long_ma_func='ema',
-        short_ma_period=1,
-        long_ma_period=19,
-        delta_quantile=0.8,
+        short_ma_period=6,
+        long_ma_period=45,
+        delta_quantile=0.6,
         delta_window=50,
     )
 

@@ -45,7 +45,7 @@ class TradingStrategy(ABC):
         This method should be overridden in subclasses to compute the indicators required for the specific trading strategy.
 
         Parameters:
-        ohlc (OHLC): The OHLC data for the trading period.
+        ohlc (OHLC): An instance of the OHLC class containing ohlc data as a dataframe in the 'data' attribute
         """
         pass
 
@@ -57,8 +57,8 @@ class TradingStrategy(ABC):
         This method should be overridden in subclasses to define the conditions under which a trade should be entered.
 
         Parameters:
-        i (int): The index of the current trading period.
-        ohlc (OHLC): The OHLC data for the trading period.
+        i (int): The index of the current candle.
+        ohlc (OHLC): An instance of the OHLC class containing ohlc data as a dataframe in the 'data' attribute
 
         Returns:
         TradeOrder or None: A TradeOrder object if a trade should be entered, otherwise None.
@@ -73,14 +73,34 @@ class TradingStrategy(ABC):
         This method should be overridden in subclasses to define the conditions under which a trade should be exited.
 
         Parameters:
-        i (int): The index of the current trading period.
-        ohlc (OHLC): The OHLC data for the trading period.
+        i (int): The index of the current candle.
+        ohlc (OHLC): An instance of the OHLC class containing ohlc data as a dataframe in the 'data' attribute
         trade (Trade): The current trade.
 
         Returns:
         TradeOrder or None: A TradeOrder object if the trade should be exited, otherwise None.
         """
         pass
+
+    @abstractmethod
+    def optimize_parameters(self, trial: op.Trial, ohlc: OHLC, point_value: float, cost_per_trade: float
+                            ) -> Tuple[float, float]:
+        """
+        Optimizes the parameters of the trading strategy using Optuna.
+
+        This method should be overridden in subclasses to optimize the parameters of the trading strategy using Optuna.
+
+        Parameters:
+        trial (op.Trial): The trial object from Optuna.
+        ohlc (OHLC): An instance of the OHLC class containing ohlc data as a dataframe in the 'data' attribute.
+        point_value (float): The point value for the backtest.
+        cost_per_trade (float): The cost per trade for the backtest.
+
+        Returns:
+        Tuple[float, float]: The net balance and drawdown of the best set of parameters.
+        """
+        pass
+
 
 class MACrossover(TradingStrategy):
     """
@@ -286,16 +306,20 @@ class MACrossover(TradingStrategy):
 
         short_ma_func = trial.suggest_categorical('short_ma_func', list(MACrossover.MA_FUNCS.keys()))
         long_ma_func = trial.suggest_categorical('long_ma_func', list(MACrossover.MA_FUNCS.keys()))
-        short_ma_period = trial.suggest_int('short_ma_period', 1, 50)
-        long_ma_period = trial.suggest_int('long_ma_period', 1, 50)
+        short_ma_period = trial.suggest_int('short_ma_period', 2, 30, step=2)
+        long_ma_period = trial.suggest_int('long_ma_period', 5, 50, step=5)
         delta_quantile = trial.suggest_float('delta_quantile', 0.2, 0.9, step=0.1)
+        delta_window = trial.suggest_int('delta_window', 50, 100, step=50)
+
+        if short_ma_period >= long_ma_period:
+            return trial_penalty
 
         self.short_ma_func = self.MA_FUNCS[short_ma_func]
         self.long_ma_func = self.MA_FUNCS[long_ma_func]
         self.short_ma_period = short_ma_period
         self.long_ma_period = long_ma_period
         self.delta_quantile = delta_quantile
-        self.delta_window = 50
+        self.delta_window = delta_window
 
         engine = Engine(point_value=point_value, cost_per_trade=cost_per_trade)
         result_data = engine.run_backtest(ohlc=ohlc, strategy=self, bypass_first_exit_check=True)
@@ -305,12 +329,10 @@ class MACrossover(TradingStrategy):
         # Get objective values and display them along with parameter values used.
         if result is not None:
             balance, drawdown = result['net_balance (BRL)'], result['drawdown_percentage (%)']
-            profit_factor, accuracy = result['profit_factor'], result['accuracy (%)']
-            print(f'Parameters: {self.__dict__}\n\nBalance: {balance:.2f}\nDrawdown: {drawdown:.2f}%\nProfit Factor: '
-                  f'{profit_factor:.2f}\nAccuracy: {accuracy:.2f}\n')
+            print(f'Parameters: {self.__dict__}\n\nBalance: {balance:.2f}\nDrawdown: {drawdown:.2f}%\n')
             print('#' * 75)
 
-            return balance, drawdown, profit_factor, accuracy
+            return balance, drawdown
 
         else:
             return trial_penalty
